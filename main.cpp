@@ -45,8 +45,8 @@ void loop() {
     url += "&field1=" + String(temp);
     url += "&field2=" + String(humid);
     Serial.println("URL : " + url);
-    Serial.println("X : " + String(temp));
-    Serial.println("Y : " + String(humid));
+    Serial.println("Temperature : " + String(temp));
+    Serial.println("Humidity : " + String(humid));
     http.begin(client, url);
     // http.addHeader("Content-Type", "application/json");
 
