@@ -1,16 +1,19 @@
 #include <Arduino.h>
-#include <ArduinoJson.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
-#include <DHT.h>
+#include "DHT.h"
 
-#define DHTPIN 2 
-#define DHTTYPE DHT22
+#define DHTPIN D4
+#define DHTTYPE DHT11
 DHT dht(DHTPIN, DHTTYPE);
 
 const char* ssid = "MAKONOI"; //WiFi Name
 const char* password = "12345678"; //WiFi Password
-int delayTime = 20 * 1000; //10s
+const char* destURL = "http://161.246.52.20/expo/import.php"; //Server URL
+int delayTime = 20 * 1000; //20s
+String deviceName = "device00";
+float sensor0 = 20;
+float sensor1 = 10;
 
 void setup() {
   Serial.begin(9600);
@@ -36,39 +39,35 @@ void loop() {
   Serial.println("--------- Start ------------");
 
   if (WiFi.status() == WL_CONNECTED) {
+    // Receive data from sensor
     float temp = dht.readTemperature();
     float humid = dht.readHumidity();
-    String temp_str = String(temp);
-    String humid_str = String(humid);
+    if (isnan(temp) || isnan(humid)) {
+      Serial.println(F("Failed to read from DHT sensor!"));
+      return;
+      }
+    Serial.println("--------- Data ------------");
+    Serial.print("Temperature: ");
+    Serial.println(temp);
+    Serial.print("Humidity: ");
+    Serial.println(humid);
 
-    HTTPClient http;
-  // Set the URL of the server
-    http.begin("http://161.246.52.20/expo/import.php");
+    // Create the POST data
+    String postdata = "deviceName=" + deviceName + "&sensor00=" + String(temp) + "&sensor01=" + String(humid);
 
-    // Set the content type of the request
-    http.addHeader("Content-Type", "application/json");
-
-    // Create a JSON document
-    DynamicJsonDocument jsonDoc(1024);
-
-    // Add data to the JSON document
-    jsonDoc["deviceName"] = "device00";
-    jsonDoc["sensor00"] = temp_str;
-    jsonDoc["sensor01"] = humid_str;
-
-    Serial.println("Temperature : " + temp_str);
-    Serial.println("Humidity: " + humid_str);
-
-    // Serialize the JSON document to a string
-    String jsonString;
-    serializeJson(jsonDoc, jsonString);
     // Send the POST request
-    int httpResponseCode = http.POST(jsonString);
+    WiFiClient client;
+    HTTPClient http;
+    http.begin(client, destURL);
+    http.addHeader("Content-Type", "application/x-www-form-urlencoded");
+    int httpResponseCode = http.POST(postdata);
 
     // Check for errors
     if (httpResponseCode > 0) {
       Serial.print("HTTP Response code: ");
       Serial.println(httpResponseCode);
+      String response = http.getString();
+      Serial.println("Server response: " + response);
     } else {
       Serial.print("Error sending POST request: ");
       Serial.println(httpResponseCode);
