@@ -10,7 +10,7 @@ DHT dht(DHTPIN, DHTTYPE);
 const char* ssid = "MAKONOI"; //WiFi Name
 const char* password = "12345678"; //WiFi Password
 const char* destURL = "http://161.246.52.20/expo/import.php"; //Server URL
-int delayTime = 20 * 1000; //20s
+int delayTime = 6 * 1000; //10s
 String deviceName = "device00";
 float sensor0 = 20;
 float sensor1 = 10;
@@ -18,6 +18,7 @@ float sensor1 = 10;
 void setup() {
   Serial.begin(9600);
   dht.begin();
+  pinMode(LED_BUILTIN, OUTPUT);
   delay(10);
   // We start by connecting to a WiFi network
   Serial.println();
@@ -37,6 +38,7 @@ void setup() {
 
 void loop() {
   Serial.println("--------- Start ------------");
+  digitalWrite(LED_BUILTIN, LOW);
 
   if (WiFi.status() == WL_CONNECTED) {
     // Receive data from sensor
@@ -46,7 +48,6 @@ void loop() {
       Serial.println(F("Failed to read from DHT sensor!"));
       return;
       }
-    Serial.println("--------- Data ------------");
     Serial.print("Temperature: ");
     Serial.println(temp);
     Serial.print("Humidity: ");
@@ -75,7 +76,7 @@ void loop() {
 
     // Free resources
     http.end();
-
+    digitalWrite(LED_BUILTIN, HIGH);
     // Wait for some time before sending the next request
     delay(1000);
   }
